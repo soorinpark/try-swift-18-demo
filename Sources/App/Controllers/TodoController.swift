@@ -3,15 +3,21 @@ import Vapor
 /// Controls basic CRUD operations on `Todo`s.
 final class TodoController {
     /// Returns a list of all `Todo`s.
-    func index(_ req: Request) throws -> Future<[Todo]> {
-        return Todo.query(on: req).all()
+    func index(_ req: Request) throws -> Future<[Todo.Outgoing]> {
+        return Todo.query(on: req).all().map { todos in
+            return try todos.map { todo in
+                return try todo.makeOutgoing(with: req)
+            }
+        }
     }
 
     /// Saves a decoded `Todo` to the database.
-    func create(_ req: Request) throws -> Future<Todo> {
-        return try req.content.decode(Todo.Incoming.self).flatMap { incoming in
+    func create(_ req: Request) throws -> Future<Todo.Outgoing> {
+        return try req.content.decode(Todo.Incoming.self).flatMap { incoming -> Future<Todo> in
             let todo = incoming.makeTodo()
             return todo.save(on: req)
+        }.map { todo in
+            return try todo.makeOutgoing(with: req)
         }
     }
 
