@@ -15,6 +15,6 @@ extension Request {
             host = String(host.dropLast())
         }
         let scheme = http.remotePeer.scheme ?? "http"
-        return "\(host)://\(scheme)/todos/"
+        return "\(scheme)://\(host)/todos/"
     }
 }

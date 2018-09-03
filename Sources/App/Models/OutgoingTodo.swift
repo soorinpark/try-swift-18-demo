@@ -13,7 +13,7 @@ extension Todo {
         var id: Int?
         var title: String?
         var completed: Bool?
-        var oder: Int?
+        var order: Int?
         var url: String
     }
 }
@@ -25,7 +25,15 @@ extension Todo {
         return Outgoing(id: id,
                         title: title,
                         completed: completed,
-                        oder: order,
+                        order: order,
                         url: url)
+    }
 }
+
+extension Future where T == Todo {
+    func makeOutgoing(with req: Request) -> Future<Todo.Outgoing> {
+        return map { todo in
+            return try todo.makeOutgoing(with: req)
+        }
+    }
 }

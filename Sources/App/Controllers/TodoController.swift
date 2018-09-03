@@ -10,15 +10,27 @@ final class TodoController {
             }
         }
     }
+    
+    func view(_ req: Request) throws -> Future<Todo.Outgoing> {
+        let todos = try req.parameters.next(Todo.self)
+        return todos.makeOutgoing(with: req)
+    }
 
     /// Saves a decoded `Todo` to the database.
     func create(_ req: Request) throws -> Future<Todo.Outgoing> {
         return try req.content.decode(Todo.Incoming.self).flatMap { incoming -> Future<Todo> in
             let todo = incoming.makeTodo()
             return todo.save(on: req)
-        }.map { todo in
-            return try todo.makeOutgoing(with: req)
-        }
+        }.makeOutgoing(with: req)
+    }
+    
+    func update(_ req: Request) throws -> Future<Todo.Outgoing> {
+        let todo = try req.parameters.next(Todo.self)
+        let incoming = try req.content.decode(Todo.Incoming.self)
+        return flatMap(to: Todo.self, todo, incoming) { todo, incoming in
+            let updated = todo.patched(with: incoming)
+            return updated.update(on: req)
+        }.makeOutgoing(with: req)
     }
 
     /// Deletes a parameterized `Todo`.
@@ -32,3 +44,5 @@ final class TodoController {
         return Todo.query(on: req).delete().transform(to: .ok)
     }
 }
+
+// create will create and update will update so update expects an id
